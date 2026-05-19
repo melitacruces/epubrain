@@ -33,11 +33,22 @@ export default async function AreasPage() {
           {areas.map((area) => (
             <li key={area.id}>
               <Link href={`/areas/${area.id}`} className="block group">
-                <Card className="h-full transition-colors group-hover:border-foreground/40">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      {area.icon ? <span>{area.icon}</span> : null}
-                      {area.name}
+                <Card 
+                  className="h-full border-l-4 transition-all group-hover:border-foreground/30 group-hover:shadow-xs"
+                  style={{ borderLeftColor: area.color || 'var(--border)' }}
+                >
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2.5 text-base">
+                      {area.icon ? (
+                        <span className="flex size-8 items-center justify-center rounded-lg bg-muted/60 text-lg shadow-2xs">
+                          {area.icon}
+                        </span>
+                      ) : (
+                        <span className="flex size-8 items-center justify-center rounded-lg bg-muted/60 text-base shadow-2xs">
+                          📁
+                        </span>
+                      )}
+                      <span className="font-semibold tracking-tight">{area.name}</span>
                     </CardTitle>
                   </CardHeader>
                   {area.description ? (

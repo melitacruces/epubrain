@@ -8,7 +8,7 @@ nivel.
 Construido con Next.js 16 (App Router), TypeScript estricto, Tailwind v4,
 shadcn/ui y Supabase (Postgres + Auth + RLS).
 
-> Para detalles de arquitectura y convenciones, ver [`CLAUDE.md`](./CLAUDE.md).
+> Para detalles de arquitectura y convenciones, ver [`ANTIGRAVITY.md`](./ANTIGRAVITY.md).
 
 ---
 

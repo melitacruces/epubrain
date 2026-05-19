@@ -12,6 +12,7 @@ import { TaskCheckbox } from '@/components/tasks/task-checkbox'
 import { DeleteTaskButton } from '@/components/tasks/delete-task-button'
 import { NotesSection } from '@/components/notes/notes-section'
 import { cn } from '@/lib/utils'
+import { Suspense } from 'react'
 
 export default async function TaskDetailPage({
   params,
@@ -82,7 +83,9 @@ export default async function TaskDetailPage({
         <MarkdownViewer content={task.content} empty="Esta tarea no tiene contenido todavía." />
       </section>
 
-      <NotesSection scope={{ task_id: task.id }} title="Notas de la tarea" />
+      <Suspense fallback={<p className="text-sm text-muted-foreground animate-pulse">Cargando notas...</p>}>
+        <NotesSection scope={{ task_id: task.id }} title="Notas de la tarea" />
+      </Suspense>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DeleteAreaButton } from '@/components/areas/delete-area-button'
 import { ProjectStatusBadge } from '@/components/projects/project-status-badge'
 import { NotesSection } from '@/components/notes/notes-section'
+import { Suspense } from 'react'
 
 export default async function AreaDetailPage({
   params,
@@ -16,20 +17,22 @@ export default async function AreaDetailPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: area } = await supabase
-    .from('areas')
-    .select('id, name, description, color, icon')
-    .eq('id', id)
-    .maybeSingle()
+  const [{ data: area }, { data: projects }] = await Promise.all([
+    supabase
+      .from('areas')
+      .select('id, name, description, color, icon')
+      .eq('id', id)
+      .maybeSingle(),
+    supabase
+      .from('projects')
+      .select('id, name, description, status, color')
+      .eq('area_id', id)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true })
+  ])
 
   if (!area) notFound()
 
-  const { data: projects } = await supabase
-    .from('projects')
-    .select('id, name, description, status')
-    .eq('area_id', area.id)
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: true })
 
   return (
     <div className="space-y-8">
@@ -42,8 +45,13 @@ export default async function AreaDetailPage({
 
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            {area.icon ? <span>{area.icon}</span> : null}
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3">
+            <span 
+              className="flex size-10 items-center justify-center rounded-xl bg-muted/60 text-2xl shadow-sm border-l-4" 
+              style={{ borderLeftColor: area.color || 'var(--border)' }}
+            >
+              {area.icon || '📁'}
+            </span>
             {area.name}
           </h1>
           {area.description ? (
@@ -75,10 +83,13 @@ export default async function AreaDetailPage({
             {projects.map((p) => (
               <li key={p.id}>
                 <Link href={`/projects/${p.id}`} className="block group">
-                  <Card className="h-full transition-colors group-hover:border-foreground/40">
-                    <CardHeader>
+                  <Card 
+                    className="h-full border-l-4 transition-all group-hover:border-foreground/30 group-hover:shadow-xs"
+                    style={{ borderLeftColor: p.color || 'var(--border)' }}
+                  >
+                    <CardHeader className="pb-3">
                       <CardTitle className="flex items-center justify-between gap-2 text-base">
-                        <span className="truncate">{p.name}</span>
+                        <span className="truncate font-semibold tracking-tight">{p.name}</span>
                         <ProjectStatusBadge status={p.status} />
                       </CardTitle>
                     </CardHeader>
@@ -103,7 +114,9 @@ export default async function AreaDetailPage({
         )}
       </section>
 
-      <NotesSection scope={{ area_id: area.id }} title="Notas del área" />
+      <Suspense fallback={<p className="text-sm text-muted-foreground animate-pulse">Cargando notas...</p>}>
+        <NotesSection scope={{ area_id: area.id }} title="Notas del área" />
+      </Suspense>
     </div>
   )
 }

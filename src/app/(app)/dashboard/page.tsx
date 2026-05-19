@@ -20,9 +20,7 @@ export default async function DashboardPage() {
   const [
     { count: areasCount },
     { count: projectsActive },
-    { count: tasksTodo },
-    { count: tasksInProgress },
-    { count: tasksDone },
+    { data: tasksStatuses },
     { data: upcoming },
   ] = await Promise.all([
     supabase.from('areas').select('id', { count: 'exact', head: true }),
@@ -30,12 +28,7 @@ export default async function DashboardPage() {
       .from('projects')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'active'),
-    supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'todo'),
-    supabase
-      .from('tasks')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'in_progress'),
-    supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'done'),
+    supabase.from('tasks').select('status'),
     supabase
       .from('tasks')
       .select('id, title, due_date, status, project_id')
@@ -45,6 +38,19 @@ export default async function DashboardPage() {
       .order('due_date', { ascending: true })
       .limit(8),
   ])
+
+  let tasksTodo = 0
+  let tasksInProgress = 0
+  let tasksDone = 0
+
+  if (tasksStatuses) {
+    for (const t of tasksStatuses) {
+      if (t.status === 'todo') tasksTodo++
+      else if (t.status === 'in_progress') tasksInProgress++
+      else if (t.status === 'done') tasksDone++
+    }
+  }
+
 
   return (
     <div className="space-y-8">
