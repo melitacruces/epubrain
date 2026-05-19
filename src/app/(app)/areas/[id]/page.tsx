@@ -8,13 +8,23 @@ import { DeleteAreaButton } from '@/components/areas/delete-area-button'
 import { ProjectStatusBadge } from '@/components/projects/project-status-badge'
 import { NotesSection } from '@/components/notes/notes-section'
 import { Suspense } from 'react'
+import { AreaDialog } from '@/components/areas/area-dialog'
+import { ProjectDialog } from '@/components/projects/project-dialog'
+import { updateAreaAction } from '@/lib/actions/areas'
+import { createProjectAction } from '@/lib/actions/projects'
 
 export default async function AreaDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { id } = await params
+  const sParams = await searchParams
+  const isEditOpen = sParams.edit === 'true'
+  const isNewProjectOpen = sParams['new-project'] === 'true'
+
   const supabase = await createClient()
 
   const [{ data: area }, { data: projects }] = await Promise.all([
@@ -33,6 +43,8 @@ export default async function AreaDetailPage({
 
   if (!area) notFound()
 
+  const updateAction = updateAreaAction.bind(null, area.id)
+  const createProjAction = createProjectAction.bind(null, area.id)
 
   return (
     <div className="space-y-8">
@@ -60,7 +72,7 @@ export default async function AreaDetailPage({
         </div>
         <div className="flex items-center gap-1">
           <Button asChild variant="ghost" size="sm">
-            <Link href={`/areas/${area.id}/edit`}>
+            <Link href={`/areas/${area.id}?edit=true`}>
               <Pencil className="size-4" /> Editar
             </Link>
           </Button>
@@ -72,7 +84,7 @@ export default async function AreaDetailPage({
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">Proyectos</h2>
           <Button asChild size="sm">
-            <Link href={`/areas/${area.id}/projects/new`}>
+            <Link href={`/areas/${area.id}?new-project=true`}>
               <Plus className="size-4" /> Nuevo proyecto
             </Link>
           </Button>
@@ -117,6 +129,23 @@ export default async function AreaDetailPage({
       <Suspense fallback={<p className="text-sm text-muted-foreground animate-pulse">Cargando notas...</p>}>
         <NotesSection scope={{ area_id: area.id }} title="Notas del área" />
       </Suspense>
+
+      <AreaDialog
+        open={isEditOpen}
+        initial={area}
+        action={updateAction}
+        cancelHref={`/areas/${area.id}`}
+        title="Editar área"
+        submitLabel="Guardar cambios"
+      />
+
+      <ProjectDialog
+        open={isNewProjectOpen}
+        action={createProjAction}
+        cancelHref={`/areas/${area.id}`}
+        title="Nuevo proyecto"
+        submitLabel="Crear proyecto"
+      />
     </div>
   )
 }

@@ -3,8 +3,17 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus } from 'lucide-react'
+import { AreaDialog } from '@/components/areas/area-dialog'
+import { createAreaAction } from '@/lib/actions/areas'
 
-export default async function AreasPage() {
+export default async function AreasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const params = await searchParams
+  const isNewOpen = params.new === 'true'
+
   const supabase = await createClient()
   const { data: areas } = await supabase
     .from('areas')
@@ -22,7 +31,7 @@ export default async function AreasPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/areas/new">
+          <Link href="/areas?new=true">
             <Plus className="size-4" /> Nueva área
           </Link>
         </Button>
@@ -66,6 +75,14 @@ export default async function AreasPage() {
       ) : (
         <EmptyState />
       )}
+
+      <AreaDialog
+        open={isNewOpen}
+        action={createAreaAction}
+        cancelHref="/areas"
+        title="Nueva área"
+        submitLabel="Crear área"
+      />
     </div>
   )
 }
@@ -78,7 +95,7 @@ function EmptyState() {
           Todavía no creaste ninguna área. Empezá por las categorías más grandes de tu vida.
         </p>
         <Button asChild>
-          <Link href="/areas/new">
+          <Link href="/areas?new=true">
             <Plus className="size-4" /> Crear mi primera área
           </Link>
         </Button>

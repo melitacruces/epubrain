@@ -13,13 +13,20 @@ import { DeleteTaskButton } from '@/components/tasks/delete-task-button'
 import { NotesSection } from '@/components/notes/notes-section'
 import { cn } from '@/lib/utils'
 import { Suspense } from 'react'
+import { TaskDialog } from '@/components/tasks/task-dialog'
+import { updateTaskAction } from '@/lib/actions/tasks'
 
 export default async function TaskDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { id } = await params
+  const sParams = await searchParams
+  const isEditOpen = sParams.edit === 'true'
+
   const supabase = await createClient()
   const { data: task } = await supabase
     .from('tasks')
@@ -32,6 +39,8 @@ export default async function TaskDetailPage({
   if (!task) notFound()
 
   const project = Array.isArray(task.projects) ? task.projects[0] : task.projects
+
+  const updateAction = updateTaskAction.bind(null, task.id)
 
   return (
     <div className="space-y-8">
@@ -69,7 +78,7 @@ export default async function TaskDetailPage({
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <Button asChild variant="ghost" size="sm">
-            <Link href={`/tasks/${task.id}/edit`}>
+            <Link href={`/tasks/${task.id}?edit=true`}>
               <Pencil className="size-4" /> Editar
             </Link>
           </Button>
@@ -86,6 +95,15 @@ export default async function TaskDetailPage({
       <Suspense fallback={<p className="text-sm text-muted-foreground animate-pulse">Cargando notas...</p>}>
         <NotesSection scope={{ task_id: task.id }} title="Notas de la tarea" />
       </Suspense>
+
+      <TaskDialog
+        open={isEditOpen}
+        initial={task}
+        action={updateAction}
+        cancelHref={`/tasks/${task.id}`}
+        title="Editar tarea"
+        submitLabel="Guardar cambios"
+      />
     </div>
   )
 }

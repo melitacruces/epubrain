@@ -12,13 +12,22 @@ import { NotesSection } from '@/components/notes/notes-section'
 import { getProjectView } from '@/lib/preferences'
 import type { KanbanTask } from '@/components/kanban/types'
 import { Suspense } from 'react'
+import { ProjectDialog } from '@/components/projects/project-dialog'
+import { TaskDialog } from '@/components/tasks/task-dialog'
+import { updateProjectAction } from '@/lib/actions/projects'
+import { createTaskAction } from '@/lib/actions/tasks'
 
 export default async function ProjectDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { id } = await params
+  const sParams = await searchParams
+  const isEditOpen = sParams.edit === 'true'
+  const isNewTaskOpen = sParams['new-task'] === 'true'
 
   const supabase = await createClient()
   const [{ data: project }, projectView, { data: rawTasks }] = await Promise.all([
@@ -57,6 +66,9 @@ export default async function ProjectDetailPage({
 
   const area = Array.isArray(project.areas) ? project.areas[0] : project.areas
 
+  const updateAction = updateProjectAction.bind(null, project.id)
+  const createTAction = createTaskAction.bind(null, project.id)
+
   return (
     <div className="space-y-8">
       <Link
@@ -86,7 +98,7 @@ export default async function ProjectDetailPage({
         </div>
         <div className="flex items-center gap-1">
           <Button asChild variant="ghost" size="sm">
-            <Link href={`/projects/${project.id}/edit`}>
+            <Link href={`/projects/${project.id}?edit=true`}>
               <Pencil className="size-4" /> Editar
             </Link>
           </Button>
@@ -100,7 +112,7 @@ export default async function ProjectDetailPage({
           <div className="flex items-center gap-2">
             <ViewToggle projectId={project.id} current={projectView} />
             <Button asChild size="sm">
-              <Link href={`/projects/${project.id}/tasks/new`}>
+              <Link href={`/projects/${project.id}?new-task=true`}>
                 <Plus className="size-4" /> Nueva tarea
               </Link>
             </Button>
@@ -117,6 +129,23 @@ export default async function ProjectDetailPage({
       <Suspense fallback={<p className="text-sm text-muted-foreground animate-pulse">Cargando notas...</p>}>
         <NotesSection scope={{ project_id: project.id }} title="Notas del proyecto" />
       </Suspense>
+
+      <ProjectDialog
+        open={isEditOpen}
+        initial={project}
+        action={updateAction}
+        cancelHref={`/projects/${project.id}`}
+        title="Editar proyecto"
+        submitLabel="Guardar cambios"
+      />
+
+      <TaskDialog
+        open={isNewTaskOpen}
+        action={createTAction}
+        cancelHref={`/projects/${project.id}`}
+        title="Nueva tarea"
+        submitLabel="Crear tarea"
+      />
     </div>
   )
 }
